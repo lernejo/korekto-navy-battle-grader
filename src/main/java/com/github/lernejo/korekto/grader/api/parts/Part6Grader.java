@@ -1,0 +1,71 @@
+package com.github.lernejo.korekto.grader.api.parts;
+
+import com.github.lernejo.korekto.grader.api.LaunchingContext;
+import com.github.lernejo.korekto.grader.api.NavyApiClient;
+import com.github.lernejo.korekto.toolkit.Exercise;
+import com.github.lernejo.korekto.toolkit.GradePart;
+import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.misc.Ports;
+import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
+import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
+import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutor;
+import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenInvocationResult;
+import org.awaitility.core.ConditionTimeoutException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
+
+public class Part6Grader implements PartGrader {
+
+    @Override
+    public String name() {
+        return "Part 6 - Start Game API (client)";
+    }
+
+    @Override
+    public Double maxGrade() {
+        return 2.0D;
+    }
+
+    @Override
+    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+        if (context.httpClientFailed) {
+            return result(List.of("Not trying to check due to previous errors"), 0.0D);
+        }
+        String standaloneUrl = "http://localhost:" + context.standaloneProxyPort;
+        String serverLaunchInClientModeCli = "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.args='"
+            + context.secondPlayerPort + " " + standaloneUrl + "'";
+
+        try (NavyProxy navyProxy = NavyProxy.createStarted(context).noForwardMode()) {
+            Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+            try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(), serverLaunchInClientModeCli)) {
+                Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+                try {
+                    await().atMost(1, TimeUnit.SECONDS).until(() -> !navyProxy.toStandaloneExchanges.isEmpty());
+                    HttpEx.Request request = navyProxy.toStandaloneExchanges.get(0).request();
+                    double grade = maxGrade();
+                    List<String> errors = new ArrayList<>();
+                    if (!request.url().contains(LaunchingContext.START_ENDPOINT)) {
+                        grade -= maxGrade() / 3;
+                        errors.add("Expecting a request on **" + LaunchingContext.START_ENDPOINT + "** but was on `" + request.url() + "`");
+                    }
+                    Optional<NavyApiClient.GameServerInfo> gameServerInfo = NavyApiClient.GameServerInfo.parse(request.body());
+                    if (gameServerInfo.isEmpty()) {
+                        grade -= maxGrade() / 2;
+                        errors.add("Bad client request body, expecting a JSON matching given schema but found:\n```\n" + request.body() + "\n```");
+                    } else if (!gameServerInfo.get().url().contains(String.valueOf(context.secondPlayerPort))) {
+                        grade -= maxGrade() / 3;
+                        errors.add("Expecting request body to contain a self referenced URL (on **" + context.secondPlayerPort + "**), but found: `" + gameServerInfo.get().url() + "`");
+                    }
+                    return result(errors, grade);
+                } catch (ConditionTimeoutException e) {
+                    return result(List.of("No request made to instance (@" + context.standaloneProxyPort + ") when passing a second parameter: `" + standaloneUrl + "`"), 0.0D);
+                }
+            }
+        }
+    }
+}
