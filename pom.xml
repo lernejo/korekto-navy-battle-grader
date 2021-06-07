@@ -17,12 +17,16 @@
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
 
-        <korekto-toolkit.version>1.0.0</korekto-toolkit.version>
+        <korekto-toolkit.version>1.1.0</korekto-toolkit.version>
         <logback-classic.version>1.2.3</logback-classic.version>
         <retrofit.version>2.9.0</retrofit.version>
         <awaitility.version>4.1.0</awaitility.version>
 
+        <junit.version>5.7.2</junit.version>
+        <assertj.version>3.19.0</assertj.version>
+
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     </properties>
 
     <scm>
@@ -83,9 +87,31 @@
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
