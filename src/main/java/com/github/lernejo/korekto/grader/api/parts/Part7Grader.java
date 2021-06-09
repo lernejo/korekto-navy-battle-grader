@@ -95,9 +95,13 @@ public class Part7Grader implements PartGrader {
                 }
             } catch (RuntimeException e) {
                 return result(List.of("Server (in client mode) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+            } finally {
+                PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
             }
         } catch (RuntimeException e) {
             return result(List.of("Server (standalone) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+        } finally {
+            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
         }
         return result(errors, grade);
     }

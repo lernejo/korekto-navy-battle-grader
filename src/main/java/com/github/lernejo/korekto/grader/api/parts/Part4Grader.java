@@ -67,6 +67,8 @@ public class Part4Grader implements PartGrader {
             return result(List.of("Server (standalone) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
         } catch (IOException e) {
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);
+        } finally {
+            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
         }
     }
 
