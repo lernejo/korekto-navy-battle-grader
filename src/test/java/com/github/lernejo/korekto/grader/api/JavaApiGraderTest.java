@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled("using external Maven commands does not seems to work in GitHub CI, to investigate")
 class JavaApiGraderTest {
 
     @BeforeEach

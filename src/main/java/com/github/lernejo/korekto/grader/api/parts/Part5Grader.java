@@ -68,6 +68,8 @@ public class Part5Grader implements PartGrader {
         } catch (IOException e) {
             context.httpServerFailed = true;
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);
+        } finally {
+            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
         }
     }
 }

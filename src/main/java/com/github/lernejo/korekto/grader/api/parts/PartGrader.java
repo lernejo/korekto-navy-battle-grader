@@ -8,7 +8,10 @@ import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public interface PartGrader {
 
@@ -28,5 +31,26 @@ public interface PartGrader {
 
     default GradePart result(List<String> explanations, double grade) {
         return new GradePart(name(), Math.min(Math.max(minGrade(), grade), maxGrade()), maxGrade(), explanations);
+    }
+
+    static void waitForPortToBeFreed(int port) {
+        do {
+            if (!isListened(port)) {
+                return;
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(50L);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        } while (true);
+    }
+
+    static boolean isListened(int port) {
+        try (Socket so = new Socket((String) null, port)) {
+            return true;
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 }

@@ -9,7 +9,6 @@ import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutor;
-import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenInvocationResult;
 import org.awaitility.core.ConditionTimeoutException;
 
 import java.util.ArrayList;
@@ -65,6 +64,8 @@ public class Part6Grader implements PartGrader {
                 } catch (ConditionTimeoutException e) {
                     return result(List.of("No request made to instance (@" + context.standaloneProxyPort + ") when passing a second parameter: `" + standaloneUrl + "`"), 0.0D);
                 }
+            } finally {
+                PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
             }
         }
     }
