@@ -1,5 +1,7 @@
 # Korekto Java API grader
 
+[![codecov](https://codecov.io/gh/lernejo/korekto-java-api-grader/branch/main/graph/badge.svg?token=A6kYtPT5DX)](https://codecov.io/gh/lernejo/korekto-java-api-grader)
+
 Korekto grader for Java Api exercise
 
 [![Build](https://github.com/lernejo/korekto-java-api-grader/actions/workflows/build.yml/badge.svg)](https://github.com/lernejo/korekto-java-api-grader/actions)

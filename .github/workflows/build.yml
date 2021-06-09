@@ -21,3 +21,4 @@ jobs:
       - run: ./mvnw -U test -Dgithub_token=${{ secrets.GH_TOKEN_REPO }}
         env:
           MAVEN_HOME: /usr/share/apache-maven-3.8.1
+      - uses: codecov/codecov-action@v1
