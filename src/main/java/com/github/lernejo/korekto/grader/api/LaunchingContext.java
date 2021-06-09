@@ -12,10 +12,7 @@ import java.util.Random;
 
 public class LaunchingContext {
 
-    /**
-     * In Secs.
-     */
-    public static final long SERVER_START_TIMEOUT = 3L;
+
     public static final String START_ENDPOINT = "/api/game/start";
 
     public final int standalonePlayerPort;
@@ -31,6 +28,13 @@ public class LaunchingContext {
     public List<HttpEx> toSecondExchanges = List.of();
     public Response<String> fireResponse;
     public boolean fireApiOk;
+
+    /**
+     * In Secs.
+     */
+    public static long serverStartTime() {
+        return Long.parseLong(System.getProperty("server_start_timeout", "3"));
+    }
 
     public LaunchingContext() {
         Random random = new Random();

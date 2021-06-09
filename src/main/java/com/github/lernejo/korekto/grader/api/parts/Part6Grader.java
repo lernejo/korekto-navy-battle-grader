@@ -40,11 +40,11 @@ public class Part6Grader implements PartGrader {
             + context.secondPlayerPort + " " + standaloneUrl + "'";
 
         try (NavyProxy navyProxy = NavyProxy.createStarted(context).noForwardMode()) {
-            Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+            Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
             try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(), serverLaunchInClientModeCli)) {
-                Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+                Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
                 try {
-                    await().atMost(1, TimeUnit.SECONDS).until(() -> !navyProxy.toStandaloneExchanges.isEmpty());
+                    await().atMost(LaunchingContext.serverStartTime() / 3, TimeUnit.SECONDS).until(() -> !navyProxy.toStandaloneExchanges.isEmpty());
                     HttpEx.Request request = navyProxy.toStandaloneExchanges.get(0).request();
                     double grade = maxGrade();
                     List<String> errors = new ArrayList<>();

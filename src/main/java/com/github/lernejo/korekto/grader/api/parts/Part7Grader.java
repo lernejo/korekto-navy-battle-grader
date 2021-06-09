@@ -44,8 +44,8 @@ public class Part7Grader implements PartGrader {
                     + context.standalonePlayerPort + "'");
              NavyProxy navyProxy = NavyProxy.createStarted(context)
             ) {
-            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
-            Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
+            Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
 
             context.toStandaloneExchanges = navyProxy.toStandaloneExchanges;
             context.toSecondExchanges = navyProxy.toSecondExchanges;
@@ -55,9 +55,9 @@ public class Part7Grader implements PartGrader {
             try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
                 serverLaunchInClientModeCli)
             ) {
-                Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+                Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
                 try {
-                    await().atMost(1, TimeUnit.SECONDS).until(() -> !context.toSecondExchanges.isEmpty());
+                    await().atMost(LaunchingContext.serverStartTime() / 3, TimeUnit.SECONDS).until(() -> !context.toSecondExchanges.isEmpty());
                     HttpEx.Request request = context.toSecondExchanges.get(0).request();
 
                     URI requestUri = uri(request.url());
@@ -85,7 +85,7 @@ public class Part7Grader implements PartGrader {
                         grade -= maxGrade() / 8;
                     }
                     try {
-                        await().atMost(5, TimeUnit.SECONDS).until(() -> noShipLeft(navyProxy));
+                        await().atMost(LaunchingContext.serverStartTime(), TimeUnit.SECONDS).until(() -> noShipLeft(navyProxy));
                     } catch (ConditionTimeoutException e) {
                         // not an error immediately, we are using greedy consumption hee to avoid restarting servers in the next parts
                     }
@@ -94,12 +94,12 @@ public class Part7Grader implements PartGrader {
                     errors.add("No fire call to the client player recorded after start game handshake");
                 }
             } catch (RuntimeException e) {
-                return result(List.of("Server (in client mode) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+                return result(List.of("Server (in client mode) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
             } finally {
                 PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
             }
         } catch (RuntimeException e) {
-            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         } finally {
             PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
         }

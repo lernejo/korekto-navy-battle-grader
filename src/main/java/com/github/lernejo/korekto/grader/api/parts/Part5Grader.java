@@ -36,7 +36,7 @@ public class Part5Grader implements PartGrader {
             (MavenExecutionHandle ignored = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
                 "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.arguments='"
                     + context.standalonePlayerPort + "'")) {
-            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
 
             NavyApiClient client = LaunchingContext.newClient(context.standalonePlayerPort);
             double grade = maxGrade();
@@ -64,7 +64,7 @@ public class Part5Grader implements PartGrader {
             return result(errors, grade);
         } catch (RuntimeException e) {
             context.httpServerFailed = true;
-            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         } catch (IOException e) {
             context.httpServerFailed = true;
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);

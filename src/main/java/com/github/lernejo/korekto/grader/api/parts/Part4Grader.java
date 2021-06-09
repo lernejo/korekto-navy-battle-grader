@@ -49,7 +49,7 @@ public class Part4Grader implements PartGrader {
             (MavenExecutionHandle handle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
                 "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.arguments='"
                     + context.standalonePlayerPort + "'")) {
-            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.SERVER_START_TIMEOUT);
+            Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
 
             Response<String> pingResponse = LaunchingContext.newClient(context.standalonePlayerPort).getPing().execute();
             if (pingResponse.isSuccessful()) {
@@ -64,7 +64,7 @@ public class Part4Grader implements PartGrader {
             }
         } catch (RuntimeException e) {
             context.httpServerFailed = true;
-            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.SERVER_START_TIMEOUT + " sec."), 0.0D);
+            return result(List.of("Server (standalone) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         } catch (IOException e) {
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);
         } finally {
