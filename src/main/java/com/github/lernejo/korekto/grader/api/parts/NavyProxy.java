@@ -123,12 +123,27 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
             }
         }
 
-        private void forwardPostRequestAndRespond(HttpExchange exchange, String originalBody) throws IOException {
-            Optional<NavyApiClient.GameServerInfo> gameServerInfo = NavyApiClient.GameServerInfo.parse(originalBody);
-            String body = gameServerInfo.isPresent() ? gameServerInfo.get().withPort(returnPort).toJson() : originalBody;
+        private void forwardPostRequestAndRespond(HttpExchange exchange, String originalRequestBody) throws IOException {
+            Optional<Map<String, Object>> requestPayload = NavyApiClient.GameServerInfo.parseAsMap(originalRequestBody);
+
+            String body;
+            if (requestPayload.isPresent() && requestPayload.get().containsKey("url")) {
+                requestPayload.get().put("url", "http://localhost:" + returnPort);
+                body = NavyApiClient.om.writeValueAsString(requestPayload.get());
+            } else {
+                body = originalRequestBody;
+            }
             try {
                 HttpResponse<String> response = forwardRequest(exchange, b -> b.POST(HttpRequest.BodyPublishers.ofString(body)).build());
-                recordAndRespond(exchange, originalBody, response);
+                Optional<Map<String, Object>> responsePayload = NavyApiClient.GameServerInfo.parseAsMap(response.body());
+                String newResponseBody;
+                if(responsePayload.isPresent() && responsePayload.get().containsKey("url")) {
+                    responsePayload.get().put("url", "http://localhost:" + destPort);
+                    newResponseBody = NavyApiClient.om.writeValueAsString(responsePayload.get());
+                } else {
+                    newResponseBody = response.body();
+                }
+                recordAndRespond(exchange, originalRequestBody, response, newResponseBody);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interrupted server thread", e);
             }
@@ -137,20 +152,21 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
         private void forwardGetRequestAndRespond(HttpExchange exchange) throws IOException {
             try {
                 HttpResponse<String> response = forwardRequest(exchange, b -> b.GET().build());
-                recordAndRespond(exchange, null, response);
+                recordAndRespond(exchange, null, response, response.body());
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interrupted server thread", e);
             }
         }
 
-        private void recordAndRespond(HttpExchange exchange, String originalBody, HttpResponse<String> response) throws IOException {
+        private void recordAndRespond(HttpExchange exchange, String originalRequestBody, HttpResponse<String> response, String newResponseBody) throws
+            IOException {
             logs.add(new HttpEx(
-                new HttpEx.Request(exchange.getRequestMethod().toUpperCase(), exchange.getRequestURI().toString(), toMap(exchange.getRequestHeaders()), originalBody),
+                new HttpEx.Request(exchange.getRequestMethod().toUpperCase(), exchange.getRequestURI().toString(), toMap(exchange.getRequestHeaders()), originalRequestBody),
                 new HttpEx.Response(response.statusCode(), toMap(response.headers().map()), response.body())));
             response.headers().map().forEach((k, v) -> exchange.getResponseHeaders().add(k, toRawHeaderValue(v)));
-            exchange.sendResponseHeaders(response.statusCode(), response.body().length());
+            exchange.sendResponseHeaders(response.statusCode(), newResponseBody.length());
             OutputStream os = exchange.getResponseBody();
-            os.write(response.body().getBytes());
+            os.write(newResponseBody.getBytes());
             os.close();
         }
 
@@ -162,7 +178,9 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
             exchange.getResponseBody().close();
         }
 
-        private HttpResponse<String> forwardRequest(HttpExchange exchange, Function<HttpRequest.Builder, HttpRequest> requestBuilder) throws IOException, InterruptedException {
+        private HttpResponse<String> forwardRequest(HttpExchange
+                                                        exchange, Function<HttpRequest.Builder, HttpRequest> requestBuilder) throws
+            IOException, InterruptedException {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:" + destPort + exchange.getRequestURI().getPath() + "?" + exchange.getRequestURI().getQuery()))
                 .timeout(Duration.ofSeconds(1));

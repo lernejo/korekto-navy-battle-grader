@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import retrofit2.Call;
 import retrofit2.http.*;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +37,15 @@ public interface NavyApiClient {
 
         public GameServerInfo withPort(int destPort) {
             return new GameServerInfo(id, "http://localhost:" + destPort, message);
+        }
+
+        @SuppressWarnings("unchecked")
+        public static Optional<Map<String, Object>> parseAsMap(String body) {
+            try {
+                return Optional.of(om.readValue(body, Map.class));
+            } catch (JsonProcessingException e) {
+                return Optional.empty();
+            }
         }
 
         public static Optional<GameServerInfo> parse(String body) {
