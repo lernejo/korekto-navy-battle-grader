@@ -44,16 +44,24 @@ public class Part5Grader implements PartGrader {
             try {
                 Response<NavyApiClient.GameServerInfo> response = client.startGame(NavyApiClient.GameServerInfo.self(context.secondProxyPort)).execute();
                 if (response.code() != 202) {
-                    grade -= maxGrade() / 3;
+                    if (response.code() == 404) {
+                        grade = 0;
+                    } else {
+                        grade -= maxGrade() / 3;
+                    }
                     errors.add("Expecting `/api/game/start` to respond with a **202** code, but found: `" + response.code() + "`");
                 }
-                if (response.body().url() == null || !response.body().url().contains(String.valueOf(context.standalonePlayerPort))) {
+                if (response.body() == null) {
+                    grade -= maxGrade() / 2;
+                    errors.add("Expecting `/api/game/start` response body to contains the server URL **http://localhost:"
+                        + context.standalonePlayerPort + "** but body was missing");
+                } else if (response.body().url() == null || !response.body().url().contains(String.valueOf(context.standalonePlayerPort))) {
                     grade -= maxGrade() / 2;
                     errors.add("Expecting `/api/game/start` response body to contains the server URL **http://localhost:"
                         + context.standalonePlayerPort + "** but found: `" + response.body().url() + "`");
                 }
             } catch (RuntimeException e) {
-                grade /= 2;
+                grade -= maxGrade() / 2;
                 errors.add("Bad response payload: " + e.getMessage());
             }
             try {
