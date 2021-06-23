@@ -14,6 +14,7 @@ import org.awaitility.core.ConditionTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -64,6 +65,8 @@ public class Part6Grader implements PartGrader {
                 } catch (ConditionTimeoutException e) {
                     return result(List.of("No request made to instance (@" + context.standaloneProxyPort + ") when passing a second parameter: `" + standaloneUrl + "`"), 0.0D);
                 }
+            } catch(CancellationException e) {
+                return result(List.of("Second player (@" + context.secondPlayerPort + ") failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
             } finally {
                 PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
             }
