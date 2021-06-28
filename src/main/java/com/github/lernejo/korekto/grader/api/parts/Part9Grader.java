@@ -33,6 +33,9 @@ public class Part9Grader implements PartGrader {
 
         List<HttpEx> toSecondFires = getFireEx(context.toSecondExchanges);
         List<HttpEx> toStandaloneFires = getFireEx(context.toStandaloneExchanges);
+        if(toStandaloneFires.isEmpty()) {
+            return result(List.of("No fire call sent from the client player recorded"), 0.0D);
+        }
         Optional<NavyApiClient.FireResult> toSecondLastFireResult = NavyApiClient.FireResult.parse(toSecondFires.get(toSecondFires.size() - 1).response().body());
         Optional<NavyApiClient.FireResult> toStandaloneLastFireResult = NavyApiClient.FireResult.parse(toStandaloneFires.get(toStandaloneFires.size() - 1).response().body());
         if (toSecondLastFireResult.isEmpty() || toStandaloneLastFireResult.isEmpty()) {
