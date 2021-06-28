@@ -45,8 +45,11 @@ public class Part8Grader implements PartGrader {
         }
         String contentType = response.headers().get("Content-Type");
         String expectedContentType = "application/json";
-        if (!expectedContentType.equals(contentType)) {
-            grade -= grade / 4;
+        if(contentType == null) {
+            errors.add("Malformed Fire response sent to client, missing **Content-Type** header");
+            grade -= maxGrade() / 4;
+        } else if (!contentType.contains(expectedContentType)) {
+            grade -= maxGrade() / 4;
             errors.add("Expecting the _Content-Type_ header to contain **" + expectedContentType + "** but found: `" + contentType + "`");
         }
 
