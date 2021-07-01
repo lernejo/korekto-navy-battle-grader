@@ -66,10 +66,14 @@ public class Part6Grader implements PartGrader {
                     return result(List.of("No request made to instance (@" + context.standaloneProxyPort + ") when passing a second parameter: `" + standaloneUrl + "`"), 0.0D);
                 }
             } catch(CancellationException e) {
+                context.httpServerFailed = true;
                 return result(List.of("Second player (@" + context.secondPlayerPort + ") failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
             } finally {
                 PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
             }
+        }  catch(CancellationException e) {
+            context.httpServerFailed = true;
+            return result(List.of("First player (@" + context.standalonePlayerPort + ") failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         }
     }
 }
