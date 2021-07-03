@@ -50,7 +50,7 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         services.add(executorService);
         server.setExecutor(executorService);
-        server.createContext("/", new CallHandler(destPort, returnPort, this, logs));
+        server.createContext("/", new CallHandler(proxyPort, destPort, returnPort, this, logs));
         server.start();
         return server;
     }
@@ -74,13 +74,15 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
 
     private static class CallHandler implements HttpHandler {
 
+        private final int selfPort;
         private final int destPort;
         private final int returnPort;
         private final ProxyConfiguration conf;
         private final List<HttpEx> logs;
         private final HttpClient client;
 
-        public CallHandler(int destPort, int returnPort, ProxyConfiguration conf, List<HttpEx> logs) {
+        public CallHandler(int selfPort, int destPort, int returnPort, ProxyConfiguration conf, List<HttpEx> logs) {
+            this.selfPort = selfPort;
             this.destPort = destPort;
             this.returnPort = returnPort;
             this.conf = conf;
@@ -138,7 +140,7 @@ public class NavyProxy implements AutoCloseable, ProxyConfiguration {
                 Optional<Map<String, Object>> responsePayload = NavyApiClient.GameServerInfo.parseAsMap(response.body());
                 String newResponseBody;
                 if(responsePayload.isPresent() && responsePayload.get().containsKey("url")) {
-                    responsePayload.get().put("url", "http://localhost:" + destPort);
+                    responsePayload.get().put("url", "http://localhost:" + selfPort);
                     newResponseBody = NavyApiClient.om.writeValueAsString(responsePayload.get());
                 } else {
                     newResponseBody = response.body();
