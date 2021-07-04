@@ -26,9 +26,12 @@ public class Part8Grader implements PartGrader {
 
     @Override
     public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+        if (!context.attemptFireRequest) {
+            return result(List.of("Not trying to check due to previous errors"), 0.0D);
+        }
         Response<String> response = context.fireResponse;
         if (response == null) {
-            return result(List.of("Not trying to check due to previous errors"), 0.0D);
+            return result(List.of("No response obtained within " + LaunchingContext.clientSocketTimeout() + " secs."), 0.0D);
         }
 
         if (!response.isSuccessful()) {
@@ -45,7 +48,7 @@ public class Part8Grader implements PartGrader {
         }
         String contentType = response.headers().get("Content-Type");
         String expectedContentType = "application/json";
-        if(contentType == null) {
+        if (contentType == null) {
             errors.add("Malformed Fire response sent to client, missing **Content-Type** header");
             grade -= maxGrade() / 4;
         } else if (!contentType.contains(expectedContentType)) {

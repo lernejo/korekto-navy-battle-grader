@@ -2,6 +2,7 @@ package com.github.lernejo.korekto.grader.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.lernejo.korekto.grader.api.parts.HttpEx;
+import okhttp3.OkHttpClient;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -9,6 +10,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class LaunchingContext {
 
@@ -28,12 +30,20 @@ public class LaunchingContext {
     public List<HttpEx> toSecondExchanges = List.of();
     public Response<String> fireResponse;
     public boolean fireApiOk;
+    public boolean attemptFireRequest;
 
     /**
      * In Secs.
      */
     public static long serverStartTime() {
         return Long.parseLong(System.getProperty("server_start_timeout", "3"));
+    }
+
+    /**
+     * In Secs.
+     */
+    public static long clientSocketTimeout() {
+        return Long.parseLong(System.getProperty("client_socket_timeout", "2"));
     }
 
     public LaunchingContext() {
@@ -45,8 +55,14 @@ public class LaunchingContext {
     }
 
     public static NavyApiClient newClient(int port) {
+        OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(clientSocketTimeout(), TimeUnit.SECONDS)
+            .readTimeout(clientSocketTimeout(), TimeUnit.SECONDS)
+            .writeTimeout(clientSocketTimeout(), TimeUnit.SECONDS)
+            .build();
         Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("http://localhost:" + port + '/')
+            .client(client)
             .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().setDefaultLeniency(true)))
             .build();

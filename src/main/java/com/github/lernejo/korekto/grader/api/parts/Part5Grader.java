@@ -65,8 +65,9 @@ public class Part5Grader implements PartGrader {
                 errors.add("Bad response payload: " + e.getMessage());
             }
             try {
+                context.attemptFireRequest = true;
                 context.fireResponse = client.fire("I3").execute();
-            } catch (RuntimeException e) {
+            } catch (RuntimeException | IOException e) {
                 // do nothing, it's a greedy call for part 8
             }
             return result(errors, grade);
