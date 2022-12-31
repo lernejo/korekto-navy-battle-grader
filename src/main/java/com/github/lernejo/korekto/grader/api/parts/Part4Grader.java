@@ -4,6 +4,7 @@ import com.github.lernejo.korekto.grader.api.LaunchingContext;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
@@ -17,25 +18,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class Part4Grader implements PartGrader {
-    @Override
-    public String name() {
-        return "Part 4 - Ping";
-    }
+public record Part4Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public Double maxGrade() {
-        return 2.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
-        if (context.compilationFailed) {
+    public GradePart grade(LaunchingContext context) {
+        if (context.hasCompilationFailed()) {
             context.httpServerFailed = true;
             context.httpClientFailed = true;
             return result(List.of("Not trying to start server as compilation failed"), 0.0D);
         }
-        Path launcherPath = exercise.getRoot().resolve("src/main/java/fr/lernejo/navy_battle/Launcher.java");
+        Path launcherPath = context.getExercise().getRoot().resolve("src/main/java/fr/lernejo/navy_battle/Launcher.java");
         if (!Files.exists(launcherPath)) {
             context.httpServerFailed = true;
             context.httpClientFailed = true;
@@ -46,7 +38,7 @@ public class Part4Grader implements PartGrader {
             return result(List.of("File **fr/lernejo/navy_battle/Launcher.java** does not have the correct package."), 0.0D);
         }
         try
-            (MavenExecutionHandle handle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
+            (MavenExecutionHandle handle = MavenExecutor.executeGoalAsync(context.getExercise(), context.getConfiguration().getWorkspace(),
                 "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.arguments='"
                     + context.standalonePlayerPort + "'")) {
             Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
@@ -68,7 +60,7 @@ public class Part4Grader implements PartGrader {
         } catch (IOException e) {
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);
         } finally {
-            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
+            Ports.waitForPortToBeFreed(context.standalonePlayerPort, TimeUnit.SECONDS, 3L);
         }
     }
 

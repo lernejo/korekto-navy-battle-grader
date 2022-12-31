@@ -4,6 +4,7 @@ import com.github.lernejo.korekto.grader.api.LaunchingContext;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
@@ -20,26 +21,17 @@ import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
 
-public class Part7Grader implements PartGrader {
-    @Override
-    public String name() {
-        return "Part 7 - Fire API (client)";
-    }
+public record Part7Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public Double maxGrade() {
-        return 4.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+    public GradePart grade(LaunchingContext context) {
         if (context.httpServerFailed || context.httpClientFailed) {
             return result(List.of("Not trying to check due to previous errors"), 0.0D);
         }
         List<String> errors = new ArrayList<>();
         double grade = maxGrade();
         try
-            (MavenExecutionHandle standaloneHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
+            (MavenExecutionHandle standaloneHandle = MavenExecutor.executeGoalAsync(context.getExercise(), context.getConfiguration().getWorkspace(),
                 "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.arguments='"
                     + context.standalonePlayerPort + "'");
              NavyProxy navyProxy = NavyProxy.createStarted(context)
@@ -52,7 +44,7 @@ public class Part7Grader implements PartGrader {
 
             String serverLaunchInClientModeCli = "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.args='"
                 + context.secondPlayerPort + " http://localhost:" + context.standaloneProxyPort + "'";
-            try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
+            try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(context.getExercise(), context.getConfiguration().getWorkspace(),
                 serverLaunchInClientModeCli)
             ) {
                 Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
@@ -96,12 +88,12 @@ public class Part7Grader implements PartGrader {
             } catch (RuntimeException e) {
                 return result(List.of("Server (in client mode) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
             } finally {
-                PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
+                Ports.waitForPortToBeFreed(context.secondPlayerPort, TimeUnit.SECONDS, 3L);
             }
         } catch (RuntimeException e) {
             return result(List.of("Server (standalone) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         } finally {
-            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
+            Ports.waitForPortToBeFreed(context.standalonePlayerPort, TimeUnit.SECONDS, 3L);
         }
         return result(errors, grade);
     }

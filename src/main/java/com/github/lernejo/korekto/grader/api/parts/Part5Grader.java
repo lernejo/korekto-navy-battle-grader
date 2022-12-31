@@ -5,6 +5,7 @@ import com.github.lernejo.korekto.grader.api.NavyApiClient;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
@@ -16,24 +17,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class Part5Grader implements PartGrader {
-    @Override
-    public String name() {
-        return "Part 5 - Start Game API (server)";
-    }
+public record Part5Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public Double maxGrade() {
-        return 3.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+    public GradePart grade(LaunchingContext context) {
         if (context.httpServerFailed) {
             return result(List.of("Not trying to check due to previous errors"), 0.0D);
         }
         try
-            (MavenExecutionHandle ignored = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(),
+            (MavenExecutionHandle ignored = MavenExecutor.executeGoalAsync(context.getExercise(), context.getConfiguration().getWorkspace(),
                 "org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass='fr.lernejo.navy_battle.Launcher' -Dexec.arguments='"
                     + context.standalonePlayerPort + "'")) {
             Ports.waitForPortToBeListenedTo(context.standalonePlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
@@ -78,7 +70,7 @@ public class Part5Grader implements PartGrader {
             context.httpServerFailed = true;
             return result(List.of("Fail to call server: " + e.getMessage()), 0.0D);
         } finally {
-            PartGrader.waitForPortToBeFreed(context.standalonePlayerPort);
+            Ports.waitForPortToBeFreed(context.standalonePlayerPort, TimeUnit.SECONDS, 3L);
         }
     }
 }

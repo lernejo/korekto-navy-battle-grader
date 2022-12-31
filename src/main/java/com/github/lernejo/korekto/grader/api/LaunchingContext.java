@@ -2,6 +2,9 @@ package com.github.lernejo.korekto.grader.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.lernejo.korekto.grader.api.parts.HttpEx;
+import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.GradingContext;
+import com.github.lernejo.korekto.toolkit.partgrader.MavenContext;
 import okhttp3.OkHttpClient;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -12,7 +15,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class LaunchingContext {
+public class LaunchingContext extends GradingContext implements MavenContext {
 
 
     public static final String START_ENDPOINT = "/api/game/start";
@@ -22,8 +25,8 @@ public class LaunchingContext {
     public final int secondProxyPort;
     public final int secondPlayerPort;
 
-    public boolean compilationFailed;
-    public boolean testFailed;
+    private boolean compilationFailed;
+    private boolean testFailed;
     public boolean httpServerFailed;
     public boolean httpClientFailed;
     public List<HttpEx> toStandaloneExchanges = List.of();
@@ -46,7 +49,8 @@ public class LaunchingContext {
         return Long.parseLong(System.getProperty("client_socket_timeout", "2"));
     }
 
-    public LaunchingContext() {
+    public LaunchingContext(GradingConfiguration configuration) {
+        super(configuration);
         Random random = new Random();
         this.standalonePlayerPort = random.nextInt(600) + 7000;
         this.standaloneProxyPort = random.nextInt(600) + 8000;
@@ -67,5 +71,25 @@ public class LaunchingContext {
             .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().setDefaultLeniency(true)))
             .build();
         return retrofit.create(NavyApiClient.class);
+    }
+
+    @Override
+    public boolean hasCompilationFailed() {
+        return compilationFailed;
+    }
+
+    @Override
+    public boolean hasTestFailed() {
+        return testFailed;
+    }
+
+    @Override
+    public void markAsCompilationFailed() {
+        compilationFailed = true;
+    }
+
+    @Override
+    public void markAsTestFailed() {
+        testFailed = true;
     }
 }

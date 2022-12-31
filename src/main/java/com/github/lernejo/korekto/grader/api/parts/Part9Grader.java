@@ -5,6 +5,7 @@ import com.github.lernejo.korekto.grader.api.NavyApiClient;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,27 +14,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class Part9Grader implements PartGrader {
+public record Part9Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public String name() {
-        return "Part 9 - Game self convergence";
-    }
-
-    @Override
-    public Double maxGrade() {
-        return 5.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+    public GradePart grade(LaunchingContext context) {
         if (context.toSecondExchanges.isEmpty() || !context.fireApiOk) {
             return result(List.of("Not trying to check due to previous errors"), 0.0D);
         }
 
         List<HttpEx> toSecondFires = getFireEx(context.toSecondExchanges);
         List<HttpEx> toStandaloneFires = getFireEx(context.toStandaloneExchanges);
-        if(toStandaloneFires.isEmpty()) {
+        if (toStandaloneFires.isEmpty()) {
             return result(List.of("No fire call sent from the client player recorded"), 0.0D);
         }
         Optional<NavyApiClient.FireResult> toSecondLastFireResult = NavyApiClient.FireResult.parse(toSecondFires.get(toSecondFires.size() - 1).response().body());

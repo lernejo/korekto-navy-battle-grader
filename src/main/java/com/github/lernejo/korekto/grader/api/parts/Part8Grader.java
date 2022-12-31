@@ -6,26 +6,17 @@ import com.github.lernejo.korekto.grader.api.NavyApiClient;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Part8Grader implements PartGrader {
+public record Part8Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public String name() {
-        return "Part 8 - Fire API (server)";
-    }
-
-    @Override
-    public Double maxGrade() {
-        return 2.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+    public GradePart grade(LaunchingContext context) {
         if (!context.attemptFireRequest) {
             return result(List.of("Not trying to check due to previous errors"), 0.0D);
         }

@@ -5,6 +5,7 @@ import com.github.lernejo.korekto.grader.api.NavyApiClient;
 import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
 import com.github.lernejo.korekto.toolkit.GradingConfiguration;
+import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
@@ -19,20 +20,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 
-public class Part6Grader implements PartGrader {
+public record Part6Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
 
     @Override
-    public String name() {
-        return "Part 6 - Start Game API (client)";
-    }
-
-    @Override
-    public Double maxGrade() {
-        return 2.0D;
-    }
-
-    @Override
-    public GradePart grade(GradingConfiguration configuration, Exercise exercise, LaunchingContext context, GitContext gitContext) {
+    public GradePart grade(LaunchingContext context) {
         if (context.httpClientFailed) {
             return result(List.of("Not trying to check due to previous errors"), 0.0D);
         }
@@ -42,7 +33,7 @@ public class Part6Grader implements PartGrader {
 
         try (NavyProxy navyProxy = NavyProxy.createStarted(context).noForwardMode()) {
             Ports.waitForPortToBeListenedTo(context.standaloneProxyPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
-            try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(exercise, configuration.getWorkspace(), serverLaunchInClientModeCli)) {
+            try (MavenExecutionHandle secondPlayerHandle = MavenExecutor.executeGoalAsync(context.getExercise(), context.getConfiguration().getWorkspace(), serverLaunchInClientModeCli)) {
                 Ports.waitForPortToBeListenedTo(context.secondPlayerPort, TimeUnit.SECONDS, LaunchingContext.serverStartTime());
                 try {
                     await().atMost(LaunchingContext.serverStartTime() / 3, TimeUnit.SECONDS).until(() -> !navyProxy.toStandaloneExchanges.isEmpty());
@@ -69,7 +60,7 @@ public class Part6Grader implements PartGrader {
                 context.httpServerFailed = true;
                 return result(List.of("Second player (@" + context.secondPlayerPort + ") failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
             } finally {
-                PartGrader.waitForPortToBeFreed(context.secondPlayerPort);
+                Ports.waitForPortToBeFreed(context.secondPlayerPort, TimeUnit.SECONDS, 3L);
             }
         }  catch(CancellationException e) {
             context.httpServerFailed = true;
