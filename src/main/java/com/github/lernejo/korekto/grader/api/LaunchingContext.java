@@ -39,7 +39,7 @@ public class LaunchingContext extends GradingContext implements MavenContext {
      * In Secs.
      */
     public static long serverStartTime() {
-        return Long.parseLong(System.getProperty("server_start_timeout", "3"));
+        return Long.parseLong(System.getProperty("server_start_timeout", "5"));
     }
 
     /**

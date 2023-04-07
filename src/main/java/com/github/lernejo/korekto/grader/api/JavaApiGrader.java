@@ -61,10 +61,17 @@ public class JavaApiGrader implements Grader<LaunchingContext> {
             new Part8Grader("Part 8 - Fire API (server)", 2.0D),
             new Part9Grader("Part 9 - Game self convergence", 5.0D),
             new GitHistoryPartGrader<>("Git (proper descriptive messages)", -4.0D),
-            new PmdPartGrader<>("Coding style", -4.0D,
-                Rule.buildExcessiveClassLengthRule(92),
-                Rule.buildExcessiveMethodLengthRule(17),
-                Rule.buildFieldMandatoryModifierRule(0, "private", "final", "!static")
+            new PmdPartGrader<>("Coding style", -20.0D,-1.0D,
+                Rule.buildExcessiveClassLengthRule(80),
+                Rule.buildExcessiveMethodLengthRule(15),
+                Rule.buildFieldMandatoryModifierRule(0, "private", "final", "!static"),
+                Rule.buildClassNamingConventionsRule(),
+                Rule.buildMethodNamingConventionsRule(),
+                Rule.buildDependencyInversionRule(),
+                Rule.buildUnusedPrivateMethodRule(),
+                Rule.buildUnusedPrivateFieldRule(),
+                Rule.buildUnusedLocalVariableRule(),
+                Rule.buildEmptyControlStatementRule()
             )
         );
     }
