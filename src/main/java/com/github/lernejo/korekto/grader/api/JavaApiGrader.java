@@ -62,7 +62,7 @@ public class JavaApiGrader implements Grader<LaunchingContext> {
             new Part9Grader("Part 9 - Game self convergence", 5.0D),
             new GitHistoryPartGrader<>("Git (proper descriptive messages)", -4.0D),
             new PmdPartGrader<>("Coding style", -20.0D,-1.0D,
-                Rule.buildExcessiveClassLengthRule(80),
+                Rule.buildExcessiveClassLengthRule(90),
                 Rule.buildExcessiveMethodLengthRule(15),
                 Rule.buildFieldMandatoryModifierRule(0, "private", "final", "!static"),
                 Rule.buildClassNamingConventionsRule(),
