@@ -14,7 +14,7 @@ on:
         required: true
 
 jobs:
-  build:
+  grade-one:
     name: Grade
     runs-on: ubuntu-latest
     steps:
