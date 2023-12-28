@@ -5,6 +5,11 @@ Korekto grader for Java Api exercise
 [![Build](https://github.com/lernejo/korekto-java-api-grader/actions/workflows/build.yml/badge.svg)](https://github.com/lernejo/korekto-java-api-grader/actions)
 [![codecov](https://codecov.io/gh/lernejo/korekto-java-api-grader/branch/main/graph/badge.svg?token=A6kYtPT5DX)](https://codecov.io/gh/lernejo/korekto-java-api-grader)
 
+## Global grading
+
+Grades are computed through the [grade-all](.github/workflows/grade_all.yml) job.  
+Results are available here: https://lernejo.github.io/korekto-java-api-grader/
+
 ## Launch locally
 
 To launch the tool locally, run `com.github.lernejo.korekto.toolkit.launcher.GradingJobLauncher` with the
@@ -13,7 +18,7 @@ argument `-s=mySlug`
 ### With Maven
 
 ```bash
-mvn compile exec:java -Dexec.mainClass="com.github.lernejo.korekto.toolkit.launcher.GradingJobLauncher" -Dexec.args="-s=mySlug"
+mvn compile exec:java -Dexec.args="-s=$GH_LOGIN" -Dgithub_token=$GH_TOKEN
 ```
 
 ### With intelliJ

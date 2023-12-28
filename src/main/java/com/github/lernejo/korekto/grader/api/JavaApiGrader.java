@@ -23,6 +23,11 @@ public class JavaApiGrader implements Grader<LaunchingContext> {
     private final Logger logger = LoggerFactory.getLogger(JavaApiGrader.class);
 
     @Override
+    public String name() {
+        return "⛵ Navy Battle project";
+    }
+
+    @Override
     public LaunchingContext gradingContext(GradingConfiguration configuration) {
         return new LaunchingContext(configuration);
     }
