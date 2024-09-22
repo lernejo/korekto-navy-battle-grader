@@ -1,32 +1,28 @@
-# Korekto Java API grader
+# Korekto Navy Battle grader
 
-Korekto grader for Java Api exercise
+🆕 Korekto grader for Navy Battle project
 
-[![Build](https://github.com/lernejo/korekto-java-api-grader/actions/workflows/build.yml/badge.svg)](https://github.com/lernejo/korekto-java-api-grader/actions)
-[![codecov](https://codecov.io/gh/lernejo/korekto-java-api-grader/branch/main/graph/badge.svg?token=A6kYtPT5DX)](https://codecov.io/gh/lernejo/korekto-java-api-grader)
+[![Build](https://github.com/lernejo/korekto-navy-battle-grader/actions/workflows/ci.yml/badge.svg)](https://github.com/lernejo/korekto-navy-battle-grader/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/lernejo/korekto-navy-battle-grader/branch/main/graph/badge.svg?token=A6kYtPT5DX)](https://codecov.io/gh/lernejo/korekto-navy-battle-grader)
+![License](https://img.shields.io/badge/License-Elastic_License_v2-blue)
 
-## Global grading
+Exercise subject: [here](EXERCISE_fr.adoc)
 
-Grades are computed through the [grade-all](.github/workflows/grade_all.yml) job.  
-Results are available here: https://lernejo.github.io/korekto-java-api-grader/
-
-## Launch locally
-
-To launch the tool locally, run `com.github.lernejo.korekto.toolkit.launcher.GradingJobLauncher` with the
-argument `-s=mySlug`
-
-### With Maven
+# How to launch
+You will need these 2 env vars:
+* `GH_LOGIN` your GitHub login
+* `GH_TOKEN` a [**P**ersonal **A**ccess **T**oken](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with permissions:
+    * (classic) : `repo` and `user`
+    * (fine-grained):
+        * Repository permissions:
+            * **Actions**: `Read-only`
+            * **Contents**: `Read-only`
 
 ```bash
-mvn compile exec:java -Dexec.args="-s=$GH_LOGIN" -Dgithub_token=$GH_TOKEN
+git clone git@github.com:lernejo/korekto-navy-battle-grader.git
+cd korekto-navy-battle-grader
+./mvnw compile exec:java -Dexec.args="-s=$GH_LOGIN" -Dgithub_token="$GH_TOKEN"
 ```
-
-### With intelliJ
-
-![Demo Run Configuration](https://raw.githubusercontent.com/lernejo/korekto-toolkit/main/docs/demo_run_configuration.png)
-
-
-### Possible errors & workaround
 
 ##### Retrofit illegal access occurring on JDK16-openJ9 (curiously, not occurring with hotspot).
 Related issues:
