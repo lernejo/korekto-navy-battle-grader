@@ -1,0 +1,239 @@
+= API HTTP en utilisant la librairie standard : production et consommation
+:tip-caption: 💡
+:note-caption: ℹ️
+:warning-caption: ⚠️
+:icons: font
+:hardbreaks-option:
+
+Préfixé par ✔️, des "checkpoints" pour vous aider à vérifier que vous avez tout bon.
+
+Cet exercice a pour but de voir l’utilisation d’API HTTP JSON, en
+
+* production : le code démarre un serveur HTTP qui répond à des requêtes spécifiques
+* consommation : le code appelle un serveur HTTP distant
+
+Le thème de cet exercice est de construire un programme autonome de jeu de bataille navale.
+La bataille aura lieu entre deux programmes ayant la même API (Application Programming Interface).
+Vous n’en construirez qu’un, mais il pourra se battre contre lui-même.
+
+Il s’agira d’une API HTTP et le format d’échange des données sera le JSON.
+
+WARNING: Il est recommandé d'utiliser la librairie https://github.com/FasterXML/jackson[Jackson] afin de transformer des records en JSON et inversement.
+
+'''
+
+Le lieu de la bataille navale est une mer découpée en 10 colonnes et 10 lignes, soit 100 cases.
+Les colonnes sont appelées de A à J, alors que les lignes seront nommées de 1 à 10.
+Ainsi, si la mer est un tableau à deux dimensions, C7 correspondra à `Cell target = sea[6][2]; // 7th row, 3rd col`;
+Cette représentation avec un tableau est un exemple, vous êtes libre de représenter le terrain de jeu comme vous l’entendez.
+
+Les joueurs doivent placer avant la partie 5 bateaux sur la mer :
+
+* 1 porte-avion de 5 cases
+* 1 croiseur de 4 cases
+* 2 contre-torpilleurs de 3 cases
+* 1 torpilleur de 2 cases
+
+== Notation
+
+La notation se découpera en plusieurs parties :
+
+* Le projet compile
+* Le projet démarre (la méthode `fr.lernejo.navy_battle.Launcher#main` doit démarrer un serveur HTTP sur le port passé comme premier paramètre)
+* Les APIs décrites ci-dessous sont
+** disponibles
+** conformes aux schémas donnés
+** cohérentes
+** fonctionnelles
+* L’historique **GIT** est lisible et propre
+** pas de message de commit sans _**intention**_
+** pas de commit successifs avec le même message
+** (-0.5 point de pénalité par commit ne respectant pas ces règles)
+** Voir cet article pour plus d’information https://chris.beams.io/posts/git-commit/
+* Le **Style** doit permettre de lire le code facilement
+** les méthodes doivent faire moins de 15 lignes
+** les classes moins de 90 lignes
+** pas de champs ré-assignable (tous les champs doivent être marqués final)
+** pas de champ ou méthode statique (sauf pour la méthode `main`)
+** (-0.5 point de pénalité par écart)
+* L’intégration continue est fonctionnelle
+** la couverture du code est > 80%
+
+== Schéma des échanges
+image::img/schema.png[]
+
+== Prérequis
+
+* Git
+* Java 21
+* Maven 3.9.x
+* (Optionnel, mais fortement recommandé) IntelliJ edition _community_ 2024
+
+'''
+
+* Sur la page du template https://github.com/lernejo/maven-starter-template, cliquer sur "Use this template"
+* ⚠️ Renseigner comme nom de dépôt : *navy_battle_project*
+* Marquer le futur dépôt comme *private*
+* Une fois le dépôt créé, installer l'app https://github.com/apps/korekto[Korekto], ou mettre à jour sa configuration afin qu'elle ait accès à ce nouveau dépôt
+* Cloner le dépôt en utilisant l'*url SSH*
+* La branche par défaut est la branche *main*, c'est sur celle-ci que nous allons travailler
+
+== Partie 1 - Serveur HTTP
+* Créer la classe `fr.lernejo.navy_battle.Launcher` contenant une fonction `main`, ce sera le point d’entrée unique de notre programme
+* Créer un serveur HTTP qui écoutera sur le port indiqué comme premier paramètre du programme
+** Pour cela, utiliser `com.sun.net.httpserver.HttpServer#create`
+** Spécifier pour ce serveur un `ExecutorService` avec de taille fixe : 1 thread
+** Utiliser la méthode `createContext` pour associer au chemin `/ping` une implémentation de `HttpHandler` qui renverra une trame HTTP de statut OK (200) et de corps `OK`
+* ✔️ une fois le serveur démarré, il est possible de le tester avec un navigateur internet à l’adresse **http://localhost:9876/ping** si le paramètre du programme est `9876`
+
+[NOTE]
+====
+La méthode `HttpHandler#handle` reçoit un paramètre de type `HttpExchange` dont les différentes méthodes permettent de lire la requête (`headers` et `body`) et d’écrire la réponse (`status`, `headers` et `body`).
+
+Par exemple pour renvoyer un code 200 (OK) et le texte `Hello` :
+
+[source,java]
+----
+String body = "Hello";
+exchange.sendResponseHeaders(200, body.length());
+try (OutputStream os = exchange.getResponseBody()) { // <1>
+    os.write(body.getBytes());
+}
+----
+<1> syntaxe _try-with-resource_ permettant d’appeler la méthode `AutoCloseable#close` à la fin du bloc sur les objets déclarés entre parenthèses, et ce, même si une exception survient
+
+====
+
+== Partie 2 - Exposer une première API
+
+Par la suite on considère que si un verbe (GET, POST, etc.) n’est pas géré, un appel avec celui-ci renverra une 404 (Not Found).
+
+* Ajouter un contexte pour le chemin `/api/game/start` qui répondra au verbe `POST`
+** il est attendu qu’une telle requête ait un corps respectant le schema suivant :
+
+[source,json]
+----
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "url": {
+            "type": "string"
+        },
+        "message": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "id",
+        "url",
+        "message"
+    ]
+}
+----
+
+Par exemple :
+
+[source,json]
+----
+{
+    "id": "0c575465-21f6-43c9-8a2d-bc64c3ae6241",
+    "url": "http://localhost:8795",
+    "message": "I will crush you!"
+}
+----
+
+** Le serveur répondra alors avec un statut Accepted (202) et un corps respectant le même schema que le corps de la requête, mais reprenant ses propres informations.
+
+Par exemple :
+
+[source,json]
+----
+{
+    "id": "2aca7611-0ae4-49f3-bf63-75bef4769028",
+    "url": "http://localhost:9876",
+    "message": "May the best code win"
+}
+----
+
+** dans le cas où le message JSON est malformé, renvoyer un statut 400 (Bad Request)
+
+== Partie 3 - Consommer cette API
+
+Si un second paramètre (une URL) est passé au programme, après avoir démarré son propre serveur HTTP, ce dernier fera une requête `POST` avec son ID, son URL et le message de son choix.
+
+* Pour cela, utiliser `java.net.http.HttpClient#newHttpClient` afin de créer un nouveau client HTTP
+* Puis créer un objet `java.net.http.HttpRequest` en utilisant la méthode statique `HttpRequest#newBuilder`
+* configurer cet objet afin d’émettre une requête correspondante à l’API décrite ci-dessus (`POST /api/game/start` avec un `body` au bon format), par exemple :
+
+[source,java]
+----
+HttpRequest requetePost = HttpRequest.newBuilder()
+    .uri(URI.create(adversaryUrl + "/api/game/start"))
+    .setHeader("Accept", "application/json")
+    .setHeader("Content-Type", "application/json")
+    .POST(BodyPublishers.ofString("{\"id\":\"1\", \"url\":\"http://localhost:" + myPort + "\", \"message\":\"hello\"}"))
+    .build();
+----
+
+* ✔️ pour tester le bon fonctionnement, démarrer un premier programme sur un port (par ex : `9876`), puis démarrer le même programme une deuxième fois avec un port différent et l’url du premier (par ex : `8795 http://localhost:9876`); ainsi le second programme devrait contacter le premier.
+
+== Partie 4 - API de tir
+
+Une seconde API va être nécessaire afin que les programmes puissent jouer à la bataille navale : une API permettant de tirer sur les bateaux de l’adversaire.
+
+Cette api répondra au verbe `GET` sur le chemin `/api/game/fire` et prendra un paramètre de requête nommé `cell` ayant pour valeur une des cases de la mer (par exemple : **B2** ou **J10**).
+La réponse devra être compatible avec le schéma suivant :
+
+[source,json]
+----
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "consequence": {
+            "type": "string",
+            "enum": ["miss", "hit", "sunk"]
+        },
+        "shipLeft": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "consequence",
+        "shipLeft"
+    ]
+}
+----
+
+Par exemple :
+
+[source,json]
+----
+{
+    "consequence": "sunk", // <1>
+    "shipLeft": true // <2>
+}
+----
+<1> la cellule ciblée était la dernière partie d’un bateau touché, la réponse indique donc que le bateau est maintenant coulé
+<2> il reste d’autres bateaux sur la mer, la partie continue
+
+== Partie 5 - Implémentation de la logique
+
+Le but de chaque programme va être de gagner la partie, pour cela le programme va devoir faire (quand c'est à son tour) un appel à l'API de tir. Le programme joue en tour par tour jusqu'à qu'il ait perdu ou gagné.
+
+Il faut donc représenter :
+
+* la position et l'état de nos bateaux
+* la mer de l'adversaire avec les tirs échoués et les tirs réussis
+
+Grâce au retour de l'API, on sait si le tir a :
+
+* manqué
+* touché
+* coulé
+
+La partie s'arrête quand l'un des deux programmes n'a plus de bateau.
