@@ -19,7 +19,7 @@
 
         <korekto-toolkit.version>1.4.3</korekto-toolkit.version>
 
-        <logback-classic.version>1.5.8</logback-classic.version>
+        <logback-classic.version>1.5.9</logback-classic.version>
         <retrofit.version>2.11.0</retrofit.version>
         <awaitility.version>4.2.2</awaitility.version>
 
