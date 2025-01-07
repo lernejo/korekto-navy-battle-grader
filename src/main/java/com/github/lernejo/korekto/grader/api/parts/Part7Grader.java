@@ -1,15 +1,14 @@
 package com.github.lernejo.korekto.grader.api.parts;
 
 import com.github.lernejo.korekto.grader.api.LaunchingContext;
-import com.github.lernejo.korekto.toolkit.Exercise;
 import com.github.lernejo.korekto.toolkit.GradePart;
-import com.github.lernejo.korekto.toolkit.GradingConfiguration;
 import com.github.lernejo.korekto.toolkit.PartGrader;
 import com.github.lernejo.korekto.toolkit.misc.Ports;
-import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutor;
 import org.awaitility.core.ConditionTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -22,6 +21,8 @@ import java.util.stream.Collectors;
 import static org.awaitility.Awaitility.await;
 
 public record Part7Grader(String name, Double maxGrade) implements PartGrader<LaunchingContext> {
+
+    private static final Logger logger = LoggerFactory.getLogger(Part7Grader.class);
 
     @Override
     public GradePart grade(LaunchingContext context) {
@@ -91,6 +92,7 @@ public record Part7Grader(String name, Double maxGrade) implements PartGrader<La
                 Ports.waitForPortToBeFreed(context.secondPlayerPort, TimeUnit.SECONDS, 3L);
             }
         } catch (RuntimeException e) {
+            logger.warn("Unexpected error", e);
             return result(List.of("Server (standalone) failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
         } finally {
             Ports.waitForPortToBeFreed(context.standalonePlayerPort, TimeUnit.SECONDS, 3L);

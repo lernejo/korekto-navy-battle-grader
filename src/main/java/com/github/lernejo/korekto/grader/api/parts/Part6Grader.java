@@ -10,6 +10,7 @@ import com.github.lernejo.korekto.toolkit.misc.Ports;
 import com.github.lernejo.korekto.toolkit.thirdparty.git.GitContext;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutionHandle;
 import com.github.lernejo.korekto.toolkit.thirdparty.maven.MavenExecutor;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.awaitility.core.ConditionTimeoutException;
 
 import java.util.ArrayList;
@@ -65,6 +66,9 @@ public record Part6Grader(String name, Double maxGrade) implements PartGrader<La
         }  catch(CancellationException e) {
             context.httpServerFailed = true;
             return result(List.of("First player (@" + context.standalonePlayerPort + ") failed to start within " + LaunchingContext.serverStartTime() + " sec."), 0.0D);
+        } catch (RuntimeException e) {
+            context.httpServerFailed = true;
+            return result(List.of("Unknown error: " + ExceptionUtils.getStackTrace(e)), 0.0D);
         }
     }
 }
