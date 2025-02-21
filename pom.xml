@@ -21,7 +21,7 @@
 
         <logback-classic.version>1.5.16</logback-classic.version>
         <retrofit.version>2.11.0</retrofit.version>
-        <awaitility.version>4.2.2</awaitility.version>
+        <awaitility.version>4.3.0</awaitility.version>
 
         <junit.version>5.11.4</junit.version>
         <assertj.version>3.27.3</assertj.version>
